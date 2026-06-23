@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { ETFS } from '../constants/etfConfig';
+import { HARDCODED_ETF_DATA } from '../constants/hardcodedData';
 
 const CACHE_KEY = 'marketsync_etf_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CORS_PROXY = 'https://corsproxy.io/?';
 
 /**
- * Fetch data for an ETF from Yahoo Finance
+ * Fetch data for an ETF from Yahoo Finance using CORS proxy
  */
 const fetchETFData = async (etf) => {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${etf}?interval=1d&range=1y`;
-    const response = await fetch(url);
+    const yfinanceUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${etf}?interval=1d&range=1y`;
+    const url = CORS_PROXY + encodeURIComponent(yfinanceUrl);
+
+    const response = await fetch(url, { timeout: 5000 });
     const json = await response.json();
 
     if (json.chart.result && json.chart.result[0]) {
@@ -18,29 +22,33 @@ const fetchETFData = async (etf) => {
       const timestamps = result.timestamp || [];
       const closes = result.indicators?.quote?.[0]?.close || [];
 
+      if (closes.length === 0) return null;
+
+      const history = timestamps
+        .map((t, i) => ({
+          date: new Date(t * 1000).toLocaleDateString('en-US'),
+          price: closes[i] || 0,
+        }))
+        .slice(-252);
+
       return {
         symbol: etf,
         price: closes[closes.length - 1] || 0,
-        change: closes[closes.length - 1] - closes[Math.max(0, closes.length - 6)] || 0,
-        history: timestamps
-          .map((t, i) => ({
-            date: new Date(t * 1000).toLocaleDateString('en-US'),
-            price: closes[i] || 0,
-          }))
-          .slice(-252), // Last 252 trading days
+        change: ((closes[closes.length - 1] - closes[Math.max(0, closes.length - 6)]) / closes[Math.max(0, closes.length - 6)] * 100) || 0,
+        history,
         timestamp: Date.now(),
       };
     }
 
     return null;
   } catch (e) {
-    console.error(`Error fetching ${etf}:`, e);
+    console.warn(`Failed to fetch ${etf} from API:`, e);
     return null;
   }
 };
 
 /**
- * Load cached data or fetch fresh data
+ * Load cached data, try API, fallback to hardcoded
  */
 const loadETFData = async (etf) => {
   // Try cache first
@@ -51,16 +59,24 @@ const loadETFData = async (etf) => {
     return cached;
   }
 
-  // Fetch fresh data
+  // Try API
   const fresh = await fetchETFData(etf);
 
-  // Update cache
   if (fresh) {
     cache[etf] = fresh;
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    return fresh;
   }
 
-  return fresh;
+  // Fallback to hardcoded
+  console.info(`Using hardcoded data for ${etf}`);
+  const hardcoded = {
+    ...HARDCODED_ETF_DATA[etf],
+    timestamp: Date.now(),
+  };
+  cache[etf] = hardcoded;
+  localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  return hardcoded;
 };
 
 /**

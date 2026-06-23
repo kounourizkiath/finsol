@@ -1,27 +1,43 @@
 /**
  * Calculate RSI (Relative Strength Index)
+ * Returns value between 0-100
  */
-export const calcRSI = (prices, period = 14) => {
-  if (prices.length < period) return null;
+export const calculateRSI = (prices, period = 14) => {
+  if (!prices || prices.length < period + 1) return null;
 
   const changes = [];
   for (let i = 1; i < prices.length; i++) {
     changes.push(prices[i] - prices[i - 1]);
   }
 
-  const gains = changes.filter(c => c > 0).reduce((a, b) => a + b, 0) / period;
-  const losses = Math.abs(changes.filter(c => c < 0).reduce((a, b) => a + b, 0)) / period;
+  // Calculate average gains and losses
+  let sumGains = 0;
+  let sumLosses = 0;
 
-  if (losses === 0) return 100;
-  const rs = gains / losses;
+  for (let i = 0; i < period; i++) {
+    if (changes[i] > 0) sumGains += changes[i];
+    else sumLosses += Math.abs(changes[i]);
+  }
+
+  let avgGain = sumGains / period;
+  let avgLoss = sumLosses / period;
+
+  // Smooth the averages for remaining data
+  for (let i = period; i < changes.length; i++) {
+    avgGain = (avgGain * (period - 1) + (changes[i] > 0 ? changes[i] : 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + (changes[i] < 0 ? Math.abs(changes[i]) : 0)) / period;
+  }
+
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
   return 100 - (100 / (1 + rs));
 };
 
 /**
  * Calculate Moving Average
  */
-export const calcMA = (prices, period) => {
-  if (prices.length < period) return null;
+export const calculateMA = (prices, period) => {
+  if (!prices || prices.length < period) return null;
   const sum = prices.slice(-period).reduce((a, b) => a + b, 0);
   return sum / period;
 };
@@ -29,29 +45,47 @@ export const calcMA = (prices, period) => {
 /**
  * Calculate Momentum (percentage change over period)
  */
-export const calcMomentum = (prices, period = 20) => {
-  if (prices.length < period) return null;
+export const calculateMomentum = (prices, days = 30) => {
+  if (!prices || prices.length < days) return null;
   const current = prices[prices.length - 1];
-  const previous = prices[prices.length - period];
+  const previous = prices[Math.max(0, prices.length - days)];
+  if (previous === 0) return 0;
   return ((current - previous) / previous) * 100;
 };
 
 /**
- * Get trading signal based on technical indicators
+ * Generate trading signal based on indicators
+ * Returns: "ACHETER" | "CONSERVER" | "ALLÉGER"
+ */
+export const generateSignal = (rsi, ma20, ma50, momentum) => {
+  if (rsi === null || ma20 === null || ma50 === null) return 'CONSERVER';
+
+  // BUY: RSI < 40 AND MA20 > MA50 AND momentum > 0
+  if (rsi < 40 && ma20 > ma50 && momentum > 0) {
+    return 'ACHETER';
+  }
+
+  // SELL: RSI > 65 OR momentum < -3
+  if (rsi > 65 || momentum < -3) {
+    return 'ALLÉGER';
+  }
+
+  // HOLD: Everything else
+  return 'CONSERVER';
+};
+
+/**
+ * Get trading signal based on price history
  */
 export const getSignal = (prices) => {
-  if (!prices || prices.length < 50) return 'HOLD';
+  if (!prices || prices.length < 50) return 'CONSERVER';
 
-  const rsi = calcRSI(prices);
-  const ma20 = calcMA(prices, 20);
-  const ma50 = calcMA(prices, 50);
-  const momentum = calcMomentum(prices);
+  const rsi = calculateRSI(prices);
+  const ma20 = calculateMA(prices, 20);
+  const ma50 = calculateMA(prices, 50);
+  const momentum = calculateMomentum(prices, 30);
 
-  if (rsi === null || ma20 === null || ma50 === null) return 'HOLD';
-
-  if (rsi < 35 && ma20 > ma50 && momentum > 0) return 'BUY';
-  if (rsi > 70 && ma20 < ma50) return 'SELL';
-  return 'HOLD';
+  return generateSignal(rsi, ma20, ma50, momentum);
 };
 
 /**
@@ -60,11 +94,13 @@ export const getSignal = (prices) => {
 export const getConfidenceScore = (prices) => {
   if (!prices || prices.length < 50) return 0;
 
-  const rsi = calcRSI(prices);
-  const ma20 = calcMA(prices, 20);
-  const ma50 = calcMA(prices, 50);
+  const rsi = calculateRSI(prices);
+  const ma20 = calculateMA(prices, 20);
+  const ma50 = calculateMA(prices, 50);
 
   let score = 50;
+
+  if (rsi === null || ma20 === null || ma50 === null) return score;
 
   // RSI confidence
   if (rsi < 35 || rsi > 70) score += 15;
@@ -82,7 +118,7 @@ export const getConfidenceScore = (prices) => {
  * Calculate volatility (standard deviation of returns)
  */
 export const calcVolatility = (prices) => {
-  if (prices.length < 2) return 0;
+  if (!prices || prices.length < 2) return 0;
 
   const returns = [];
   for (let i = 1; i < prices.length; i++) {
@@ -98,7 +134,7 @@ export const calcVolatility = (prices) => {
  * Calculate average correlation between price pairs
  */
 export const calcAverageCorrelation = (priceArrays) => {
-  if (priceArrays.length < 2) return 0;
+  if (!priceArrays || priceArrays.length < 2) return 0;
 
   let totalCorr = 0;
   let count = 0;
@@ -118,14 +154,16 @@ export const calcAverageCorrelation = (priceArrays) => {
  * Helper: Calculate correlation between two price series
  */
 const calculateCorrelation = (arr1, arr2) => {
+  if (!arr1 || !arr2) return 0;
+
   const minLen = Math.min(arr1.length, arr2.length);
   if (minLen < 2) return 0;
 
   const slice1 = arr1.slice(-minLen);
   const slice2 = arr2.slice(-minLen);
 
-  const mean1 = slice1.reduce((a, b) => a + b) / minLen;
-  const mean2 = slice2.reduce((a, b) => a + b) / minLen;
+  const mean1 = slice1.reduce((a, b) => a + b, 0) / minLen;
+  const mean2 = slice2.reduce((a, b) => a + b, 0) / minLen;
 
   let numerator = 0;
   let denom1 = 0;
@@ -147,7 +185,7 @@ const calculateCorrelation = (arr1, arr2) => {
  * Calculate max drawdown
  */
 export const calcMaxDrawdown = (prices) => {
-  if (prices.length < 2) return 0;
+  if (!prices || prices.length < 2) return 0;
 
   let maxDD = 0;
   let peak = prices[0];

@@ -1,12 +1,12 @@
-import { getSignal, getConfidenceScore, calcRSI, calcMA, calcMomentum } from '../../utils/indicators';
+import { getSignal, getConfidenceScore, calculateRSI, calculateMA, calculateMomentum } from '../../utils/indicators';
 
 export const SignalCard = ({ etf, prices }) => {
   const signal = getSignal(prices);
   const confidence = getConfidenceScore(prices);
-  const rsi = calcRSI(prices);
-  const ma20 = calcMA(prices, 20);
-  const ma50 = calcMA(prices, 50);
-  const momentum = calcMomentum(prices);
+  const rsi = calculateRSI(prices);
+  const ma20 = calculateMA(prices, 20);
+  const ma50 = calculateMA(prices, 50);
+  const momentum = calculateMomentum(prices);
 
   const signalColor = signal === 'BUY' ? '#10b981' : signal === 'SELL' ? '#ef4444' : '#f59e0b';
   const trendDirection = ma20 && ma50 ? (ma20 > ma50 ? '↑' : '↓') : '→';
