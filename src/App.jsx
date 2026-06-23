@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { useMarketData } from './hooks/useMarketData';
 
 // Lazy load heavy components to prevent blocking
 const Header = ({ onExportPDF, lastUpdate }) => {
@@ -44,6 +45,9 @@ function AppContent() {
   const reportRef = useRef();
   const [lastUpdate] = useState(new Date());
 
+  // Try loading market data
+  const { data: etfData, loading, error } = useMarketData();
+
   const exportPDF = async () => {
     try {
       if (!reportRef.current) return;
@@ -78,9 +82,17 @@ function AppContent() {
           <p style={{ fontSize: '18px', color: '#a8b2c7', marginBottom: '24px' }}>
             App is rendering successfully!
           </p>
-          <p style={{ color: '#a8b2c7', marginBottom: '32px' }}>
+          <p style={{ color: '#a8b2c7', marginBottom: '12px' }}>
             Current Step: <span style={{ color: '#00d4aa', fontWeight: 'bold' }}>{step}/3</span>
           </p>
+
+          {loading && <p style={{ color: '#00d4aa', marginBottom: '16px' }}>📊 Loading market data...</p>}
+          {error && <p style={{ color: '#ef4444', marginBottom: '16px' }}>❌ Error: {error}</p>}
+          {!loading && !error && (
+            <p style={{ color: '#10b981', marginBottom: '16px' }}>
+              ✅ Market data loaded! ({Object.keys(etfData).length} ETFs)
+            </p>
+          )}
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
             {[1, 2, 3].map(s => (
