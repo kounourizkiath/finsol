@@ -3,7 +3,7 @@ import { CorrelationHeatmap } from '../charts/CorrelationHeatmap';
 import { ETFS } from '../../constants/etfConfig';
 import { useLanguage } from '../../context/LanguageContext';
 
-export const StepAnalysis = ({ etfData, onNext, onPrevious }) => {
+export const StepAnalysis = ({ etfData }) => {
   const { t } = useLanguage();
   return (
     <div className="space-y-6">
@@ -26,20 +26,6 @@ export const StepAnalysis = ({ etfData, onNext, onPrevious }) => {
         </p>
       </div>
 
-      <div className="flex justify-between">
-        <button
-          onClick={onPrevious}
-          className="border border-[#3a4458] text-[#f5f7fa] font-bold px-6 py-3 rounded-lg hover:border-[#00d4aa] transition"
-        >
-          {t.prev}
-        </button>
-        <button
-          onClick={onNext}
-          className="bg-gradient-to-r from-[#00d4aa] to-[#00a878] text-[#0a0e27] font-bold px-6 py-3 rounded-lg hover:shadow-lg transition"
-        >
-          {t.next}
-        </button>
-      </div>
     </div>
   );
 };

@@ -5,64 +5,11 @@ import jsPDF from 'jspdf';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { useMarketData } from './hooks/useMarketData';
 import { useDCASimulator } from './hooks/useDCASimulator';
+import { Navbar } from './components/layout/Navbar';
 import { StepMarket } from './components/steps/StepMarket';
 import { StepAnalysis } from './components/steps/StepAnalysis';
 import { StepDecision } from './components/steps/StepDecision';
 import { Documentation } from './components/steps/Documentation';
-
-// Lazy load heavy components to prevent blocking
-const Header = ({ onExportPDF, lastUpdate, currentStep, setStep }) => {
-  const { lang, setLang, t } = useLanguage();
-  return (
-    <header style={{
-      position: 'sticky',
-      top: 0,
-      background: 'linear-gradient(to right, #1a1f3a, #242d4a)',
-      borderBottom: '1px solid #3a4458',
-      padding: '16px 24px',
-      zIndex: 40,
-    }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: '20px', fontWeight: 'bold', background: 'linear-gradient(to right, #00d4aa, #00a878)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', cursor: 'pointer' }} onClick={() => setStep(1)}>
-          MarketSync Pro
-        </div>
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-          <div style={{ fontSize: '12px', color: '#a8b2c7', display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%', animation: 'pulse 2s infinite' }}></span>
-            {currentStep !== 4 && t.live} {currentStep !== 4 && lastUpdate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-          </div>
-          <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ background: '#242d4a', border: '1px solid #3a4458', color: '#f5f7fa', padding: '6px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>
-            <option value="FR">🇫🇷 FR</option>
-            <option value="EN">🇬🇧 EN</option>
-          </select>
-          {currentStep !== 4 && (
-            <button onClick={onExportPDF} style={{ background: '#00d4aa', color: '#0a0e27', fontWeight: 'bold', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px' }}>
-              {t.exportPdf}
-            </button>
-          )}
-          <button
-            onClick={() => setStep(currentStep === 4 ? 1 : 4)}
-            style={{
-              background: currentStep === 4 ? '#00d4aa' : '#3a4458',
-              color: currentStep === 4 ? '#0a0e27' : '#f5f7fa',
-              fontWeight: 'bold',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '12px',
-              transition: 'all 0.3s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = currentStep === 4 ? '#00c299' : '#4a5568'}
-            onMouseLeave={(e) => e.target.style.background = currentStep === 4 ? '#00d4aa' : '#3a4458'}
-          >
-            📚 Docs
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-};
 
 function AppContent() {
   const [step, setStep] = useState(1);
@@ -96,7 +43,7 @@ function AppContent() {
 
   return (
     <div style={{ background: '#0a0e27', minHeight: '100vh', color: '#f5f7fa' }}>
-      <Header onExportPDF={exportPDF} lastUpdate={lastUpdate} currentStep={step} setStep={setStep} />
+      <Navbar currentStep={step} setStep={setStep} onExportPDF={exportPDF} />
 
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 0' }}>
         {loading && (
@@ -134,8 +81,6 @@ function AppContent() {
               etfData={etfData}
               selectedETF={selectedETF}
               setSelectedETF={setSelectedETF}
-              onNext={() => setStep(2)}
-              onPrevious={() => setStep(0)}
             />
           </div>
         )}
@@ -144,8 +89,6 @@ function AppContent() {
           <div style={{ padding: '0 24px' }}>
             <StepAnalysis
               etfData={etfData}
-              onNext={() => setStep(3)}
-              onPrevious={() => setStep(1)}
             />
           </div>
         )}
@@ -164,14 +107,12 @@ function AppContent() {
               setDcaEnd={setDcaEnd}
               dca={dca}
               onExportPDF={exportPDF}
-              onNext={() => setStep(1)}
-              onPrevious={() => setStep(2)}
             />
           </div>
         )}
 
         {step === 4 && (
-          <Documentation onPrevious={() => setStep(3)} />
+          <Documentation />
         )}
       </main>
     </div>

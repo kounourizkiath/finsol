@@ -34,7 +34,7 @@ const SectionCard = ({ title, icon, children, borderColor = '#00d4aa' }) => (
   </div>
 );
 
-export const Documentation = ({ onPrevious }) => {
+export const Documentation = () => {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState('architecture');
 

@@ -5,7 +5,7 @@ import { PerformanceChart } from '../charts/PerformanceChart';
 import { calcVolatility, calcAverageCorrelation } from '../../utils/indicators';
 import { useLanguage } from '../../context/LanguageContext';
 
-export const StepMarket = ({ etfData, selectedETF, setSelectedETF, onNext, onPrevious }) => {
+export const StepMarket = ({ etfData, selectedETF, setSelectedETF }) => {
   const { t } = useLanguage();
   const [animatedKPIs, setAnimatedKPIs] = useState({});
 
@@ -111,16 +111,6 @@ export const StepMarket = ({ etfData, selectedETF, setSelectedETF, onNext, onPre
         </div>
       )}
 
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <div></div>
-        <button
-          onClick={onNext}
-          className="bg-gradient-to-r from-[#00d4aa] to-[#00a878] text-[#0a0e27] font-bold px-6 py-3 rounded-lg hover:shadow-lg transition"
-        >
-          {t.next}
-        </button>
-      </div>
     </div>
   );
 };

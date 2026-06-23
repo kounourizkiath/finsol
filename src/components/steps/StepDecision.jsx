@@ -12,7 +12,7 @@ const OPTIMAL_ALLOCATION = {
   '^FCHI': 12,
 };
 
-export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, setDcaAmount, dcaStart, setDcaStart, dcaEnd, setDcaEnd, dca, onExportPDF, onNext, onPrevious }) => {
+export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, setDcaAmount, dcaStart, setDcaStart, dcaEnd, setDcaEnd, dca, onExportPDF }) => {
   const { t } = useLanguage();
   if (!dca) {
     return (
@@ -177,22 +177,6 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
       {/* Disclaimer */}
       <div className="text-[#a8b2c7] text-xs p-3 bg-[#242d4a] rounded-lg border border-[#3a4458]">
         {t.disclaimer}
-      </div>
-
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <button
-          onClick={onPrevious}
-          className="border border-[#3a4458] text-[#f5f7fa] font-bold px-6 py-3 rounded-lg hover:border-[#00d4aa] transition"
-        >
-          {t.prev}
-        </button>
-        <button
-          onClick={onExportPDF}
-          className="bg-gradient-to-r from-[#00d4aa] to-[#00a878] text-[#0a0e27] font-bold px-6 py-3 rounded-lg hover:shadow-lg transition"
-        >
-          {t.exportPdf}
-        </button>
       </div>
     </div>
   );
