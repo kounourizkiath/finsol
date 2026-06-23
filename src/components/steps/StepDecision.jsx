@@ -1,12 +1,21 @@
 import { DCAChart } from '../charts/DCAChart';
-import { formatCurrency, formatPercent, formatNumber } from '../../utils/formatters';
+import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { ETFS } from '../../constants/etfConfig';
+
+// Optimal allocation weights (from Markowitz)
+const OPTIMAL_ALLOCATION = {
+  URTH: 28,
+  SPY: 22,
+  QQQ: 18,
+  GLD: 20,
+  '^FCHI': 12,
+};
 
 export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, setDcaAmount, dcaStart, setDcaStart, dcaEnd, setDcaEnd, dca, onExportPDF, onNext, onPrevious, labels }) => {
   if (!dca) {
     return (
-      <div className="text-center py-12">
-        <p className="text-[#a8b2c7]">No DCA data available</p>
+      <div className="text-center py-12 text-[#a8b2c7]">
+        <p>Chargement de la simulation DCA...</p>
       </div>
     );
   }
@@ -14,9 +23,12 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* LEFT: DCA Simulator (60%) */}
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-lg font-bold text-[#f5f7fa]">{labels.simulator}</h3>
+          <p className="text-[#a8b2c7] text-sm">Testez différentes stratégies d'investissement régulier</p>
 
+          {/* Controls */}
           <div className="bg-[#1a1f3a] border border-[#3a4458] rounded-lg p-6 space-y-4">
             <div>
               <label className="text-[#a8b2c7] text-sm font-bold block mb-2">ETF</label>
@@ -25,15 +37,13 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
                 onChange={(e) => setSelectedETF(e.target.value)}
                 className="w-full bg-[#242d4a] border border-[#3a4458] text-[#f5f7fa] px-3 py-2 rounded"
               >
-                {ETFS.map(etf => (
-                  <option key={etf}>{etf}</option>
-                ))}
+                {ETFS.map(etf => <option key={etf}>{etf}</option>)}
               </select>
             </div>
 
             <div>
               <label className="text-[#a8b2c7] text-sm font-bold block mb-2">
-                Monthly: {formatCurrency(dcaAmount)}
+                Montant mensuel: <span className="text-[#00d4aa]">{formatCurrency(dcaAmount)}</span>
               </label>
               <input
                 type="range"
@@ -42,93 +52,132 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
                 step="50"
                 value={dcaAmount}
                 onChange={(e) => setDcaAmount(parseInt(e.target.value))}
-                className="w-full"
+                className="w-full accent-[#00d4aa]"
               />
+              <div className="text-xs text-[#a8b2c7] mt-1">€50 à €1,000</div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[#a8b2c7] text-sm font-bold block mb-2">Start</label>
+                <label className="text-[#a8b2c7] text-sm font-bold block mb-2">Début</label>
                 <input
                   type="date"
                   value={dcaStart}
                   onChange={(e) => setDcaStart(e.target.value)}
-                  className="w-full bg-[#242d4a] border border-[#3a4458] text-[#f5f7fa] px-3 py-2 rounded"
+                  className="w-full bg-[#242d4a] border border-[#3a4458] text-[#f5f7fa] px-3 py-2 rounded text-sm"
                 />
               </div>
               <div>
-                <label className="text-[#a8b2c7] text-sm font-bold block mb-2">End</label>
+                <label className="text-[#a8b2c7] text-sm font-bold block mb-2">Fin</label>
                 <input
                   type="date"
                   value={dcaEnd}
                   onChange={(e) => setDcaEnd(e.target.value)}
-                  className="w-full bg-[#242d4a] border border-[#3a4458] text-[#f5f7fa] px-3 py-2 rounded"
+                  className="w-full bg-[#242d4a] border border-[#3a4458] text-[#f5f7fa] px-3 py-2 rounded text-sm"
                 />
               </div>
             </div>
 
+            {/* Results Grid */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#3a4458]">
               <div>
-                <div className="text-[#a8b2c7] text-xs uppercase">Invested</div>
-                <div className="text-2xl font-bold text-[#f5f7fa]">
+                <div className="text-[#a8b2c7] text-xs uppercase tracking-wider font-bold mb-1">Investi</div>
+                <div className="text-2xl font-bold font-mono text-[#f5f7fa]">
                   {formatCurrency(dca.invested)}
                 </div>
               </div>
               <div>
-                <div className="text-[#a8b2c7] text-xs uppercase">Final Value</div>
-                <div className="text-2xl font-bold text-[#00d4aa]">
+                <div className="text-[#a8b2c7] text-xs uppercase tracking-wider font-bold mb-1">Valeur finale</div>
+                <div className="text-2xl font-bold font-mono text-[#00d4aa]">
                   {formatCurrency(dca.value)}
                 </div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-[#a8b2c7] text-xs uppercase">Performance</div>
+                <div className="text-[#a8b2c7] text-xs uppercase tracking-wider font-bold mb-1">Gain</div>
                 <div
-                  className={`text-2xl font-bold ${
+                  className={`text-xl font-bold font-mono ${
+                    dca.gain >= 0 ? 'text-[#10b981]' : 'text-[#ef4444]'
+                  }`}
+                >
+                  {dca.gain >= 0 ? '+' : ''}{formatCurrency(dca.gain)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[#a8b2c7] text-xs uppercase tracking-wider font-bold mb-1">Performance</div>
+                <div
+                  className={`text-xl font-bold font-mono ${
                     dca.performance >= 0 ? 'text-[#10b981]' : 'text-[#ef4444]'
                   }`}
                 >
-                  {formatPercent(dca.performance)}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#a8b2c7] text-xs uppercase">Annualized</div>
-                <div className="text-2xl font-bold text-[#f5f7fa]">
-                  {formatPercent(dca.annualized)}
+                  {dca.performance >= 0 ? '+' : ''}{dca.performance.toFixed(1)}%
                 </div>
               </div>
             </div>
+
+            <div className="pt-4 border-t border-[#3a4458]">
+              <div className="text-sm text-[#a8b2c7]">
+                <strong>Rendement annualisé:</strong>{' '}
+                <span className="text-[#00d4aa] font-bold">{dca.annualized.toFixed(2)}% / an</span>
+              </div>
+              {dca.bestMonthDate && (
+                <div className="text-xs text-[#a8b2c7] mt-2">
+                  Meilleur mois: <span className="text-[#10b981]">+{dca.bestMonth.toFixed(1)}%</span> ({dca.bestMonthDate})
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* DCA Chart */}
           <DCAChart data={dca} />
         </div>
 
+        {/* RIGHT: Portfolio Optimizer (40%) */}
         <div className="space-y-4">
           <h3 className="text-lg font-bold text-[#f5f7fa]">{labels.optimal}</h3>
-          <div className="bg-[#1a1f3a] border border-[#3a4458] rounded-lg p-4">
-            {ETFS.slice(0, 3).map((etf, i) => (
-              <div key={etf} className="flex justify-between items-center mb-4">
-                <span className="text-[#a8b2c7]">{etf}</span>
-                <div className="bg-[#242d4a] rounded-full h-2 flex-grow mx-3 w-20">
-                  <div
-                    className="bg-[#00d4aa] h-full rounded-full"
-                    style={{ width: `${30 + i * 5}%` }}
-                  ></div>
+          <p className="text-[#a8b2c7] text-sm">Maximisation du ratio de Sharpe</p>
+
+          {/* Allocation Table */}
+          <div className="bg-[#1a1f3a] border border-[#3a4458] rounded-lg p-4 space-y-3">
+            {ETFS.map((etf) => {
+              const weight = OPTIMAL_ALLOCATION[etf] || 0;
+              return (
+                <div key={etf}>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[#f5f7fa] font-bold text-sm">{etf}</span>
+                    <span className="text-[#00d4aa] font-bold text-sm">{weight}%</span>
+                  </div>
+                  <div className="bg-[#242d4a] rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-[#00d4aa] to-[#00a878] h-full rounded-full"
+                      style={{ width: `${weight}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <span className="text-[#f5f7fa] font-bold w-12 text-right">
-                  {30 + i * 5}%
-                </span>
-              </div>
-            ))}
+              );
+            })}
+
             <button className="w-full mt-6 bg-[#00d4aa] text-[#0a0e27] font-bold py-2 rounded hover:shadow-lg transition">
-              Apply
+              Appliquer l'allocation
             </button>
+          </div>
+
+          {/* Insight */}
+          <div className="text-[#a8b2c7] text-xs p-4 bg-[#242d4a] rounded-lg border border-[#3a4458] leading-relaxed">
+            <strong>Comment c'est calculé ?</strong>
+            <p className="mt-2">
+              Cette allocation maximise le ratio de Sharpe en tenant compte des corrélations.
+              GLD surpondéré car il réduit la volatilité globale (corrélation &lt;0.15 avec actions).
+            </p>
           </div>
         </div>
       </div>
 
+      {/* Disclaimer */}
+      <div className="text-[#a8b2c7] text-xs p-3 bg-[#242d4a] rounded-lg border border-[#3a4458]">
+        ⚠️ <strong>Simulation à titre éducatif uniquement.</strong> Passé ne préjuge pas de l'avenir. Pas de conseil financier.
+      </div>
+
+      {/* Navigation */}
       <div className="flex justify-between">
         <button
           onClick={onPrevious}

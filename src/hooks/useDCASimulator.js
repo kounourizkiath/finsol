@@ -14,27 +14,46 @@ export const useDCASimulator = (etfData, selectedETF, dcaAmount, dcaStart, dcaEn
       const end = new Date(dcaEnd);
       const history = etfData[selectedETF].history;
 
+      if (history.length === 0) return null;
+
       let totalInvested = 0;
       let shares = 0;
       const results = [];
 
-      // Simulate monthly DCA
-      for (let d = new Date(start); d <= end; d.setMonth(d.getMonth() + 1)) {
-        const dateStr = d.toLocaleDateString('en-US');
-        const dayData = history.find(h => h.date === dateStr);
+      // Find monthly data points (approximate)
+      let currentMonth = new Date(start);
 
-        if (dayData && dayData.price > 0) {
+      while (currentMonth <= end) {
+        const currentDateStr = currentMonth.toLocaleDateString('en-US');
+
+        // Find closest date in history
+        let closestData = null;
+        let minDiff = Infinity;
+
+        for (const dayData of history) {
+          const historyDate = new Date(dayData.date);
+          const diff = Math.abs(historyDate.getTime() - currentMonth.getTime());
+
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestData = dayData;
+          }
+        }
+
+        if (closestData && closestData.price > 0) {
           totalInvested += dcaAmount;
-          shares += dcaAmount / dayData.price;
+          shares += dcaAmount / closestData.price;
 
           results.push({
-            date: dateStr,
-            invested: totalInvested,
-            value: shares * dayData.price,
-            price: dayData.price,
-            shares: shares,
+            date: closestData.date,
+            invested: parseFloat(totalInvested.toFixed(2)),
+            value: parseFloat((shares * closestData.price).toFixed(2)),
+            price: closestData.price,
+            shares: parseFloat(shares.toFixed(4)),
           });
         }
+
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
       }
 
       if (results.length === 0) {
@@ -44,20 +63,22 @@ export const useDCASimulator = (etfData, selectedETF, dcaAmount, dcaStart, dcaEn
       const final = results[results.length - 1];
       const finalValue = final.value;
       const gain = finalValue - final.invested;
-      const performance = (gain / final.invested) * 100;
+      const performance = final.invested > 0 ? (gain / final.invested) * 100 : 0;
 
       // Calculate annualized return
       const years = results.length / 12;
       const annualized = years > 0 ? Math.pow(finalValue / final.invested, 1 / years) - 1 : 0;
 
       // Find best and worst months
-      let bestMonth = 0;
-      let worstMonth = 0;
+      let bestMonth = -Infinity;
+      let worstMonth = Infinity;
       let bestMonthDate = '';
       let worstMonthDate = '';
 
       for (let i = 1; i < results.length; i++) {
-        const monthGain = (results[i].value - results[i - 1].value) / results[i - 1].value;
+        const prevValue = results[i - 1].value;
+        const monthGain = prevValue > 0 ? (results[i].value - prevValue) / prevValue : 0;
+
         if (monthGain > bestMonth) {
           bestMonth = monthGain;
           bestMonthDate = results[i].date;
@@ -69,16 +90,16 @@ export const useDCASimulator = (etfData, selectedETF, dcaAmount, dcaStart, dcaEn
       }
 
       return {
-        invested: final.invested,
-        value: finalValue,
-        gain,
-        performance,
-        annualized: annualized * 100,
-        shares: final.shares,
+        invested: parseFloat(final.invested.toFixed(2)),
+        value: parseFloat(finalValue.toFixed(2)),
+        gain: parseFloat(gain.toFixed(2)),
+        performance: parseFloat(performance.toFixed(2)),
+        annualized: parseFloat((annualized * 100).toFixed(2)),
+        shares: parseFloat(final.shares.toFixed(4)),
         results,
-        bestMonth: bestMonth * 100,
+        bestMonth: parseFloat((bestMonth * 100).toFixed(2)),
         bestMonthDate,
-        worstMonth: worstMonth * 100,
+        worstMonth: parseFloat((worstMonth * 100).toFixed(2)),
         worstMonthDate,
         duration: results.length, // months
       };
