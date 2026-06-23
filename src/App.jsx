@@ -6,6 +6,7 @@ import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { useMarketData } from './hooks/useMarketData';
 import { useDCASimulator } from './hooks/useDCASimulator';
 import { Navbar } from './components/layout/Navbar';
+import { PipelineStatusBar } from './components/layout/PipelineStatusBar';
 import { StepMarket } from './components/steps/StepMarket';
 import { StepAnalysis } from './components/steps/StepAnalysis';
 import { StepDecision } from './components/steps/StepDecision';
@@ -19,10 +20,9 @@ function AppContent() {
   const [dcaEnd, setDcaEnd] = useState('2024-12-31');
   const { t } = useLanguage();
   const reportRef = useRef();
-  const [lastUpdate] = useState(new Date());
 
   // Try loading market data
-  const { data: etfData, loading, error } = useMarketData();
+  const { data: etfData, loading, error, isLive, avgLatency, lastUpdate } = useMarketData();
   const dca = useDCASimulator(etfData, selectedETF, dcaAmount, dcaStart, dcaEnd);
 
   const exportPDF = async () => {
@@ -115,6 +115,8 @@ function AppContent() {
           <Documentation />
         )}
       </main>
+
+      <PipelineStatusBar isLive={isLive} avgLatency={avgLatency} lastUpdate={lastUpdate} />
     </div>
   );
 }

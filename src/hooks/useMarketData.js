@@ -1,112 +1,107 @@
 import { useState, useEffect } from 'react';
 import { ETFS } from '../constants/etfConfig';
-import { HARDCODED_ETF_DATA } from '../constants/hardcodedData';
+import { calculateRSI, calculateMA, generateSignal, getConfidenceScore } from '../utils/indicators';
 
 const CACHE_KEY = 'marketsync_etf_cache';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const CORS_PROXY = 'https://corsproxy.io/?';
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 
 /**
- * Fetch data for an ETF from Yahoo Finance using CORS proxy
+ * Fetch data from Vercel API endpoint
  */
-const fetchETFData = async (etf) => {
+const fetchETFData = async (symbol) => {
   try {
-    const yfinanceUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${etf}?interval=1d&range=1y`;
-    const url = CORS_PROXY + encodeURIComponent(yfinanceUrl);
-
-    const response = await fetch(url, { timeout: 5000 });
+    const response = await fetch(`/api/etf/${encodeURIComponent(symbol)}?range=2y&interval=1mo`);
     const json = await response.json();
 
-    if (json.chart.result && json.chart.result[0]) {
-      const result = json.chart.result[0];
-      const timestamps = result.timestamp || [];
-      const closes = result.indicators?.quote?.[0]?.close || [];
+    if (!json.history || json.history.length === 0) return null;
 
-      if (closes.length === 0) return null;
+    const history = json.history.map(h => ({
+      date: new Date(h.date).toLocaleDateString('en-US'),
+      price: h.price
+    }));
 
-      const history = timestamps
-        .map((t, i) => ({
-          date: new Date(t * 1000).toLocaleDateString('en-US'),
-          price: closes[i] || 0,
-        }))
-        .slice(-252);
+    const prices = history.map(h => h.price);
+    const rsi = calculateRSI(prices);
+    const ma20 = calculateMA(prices, 20);
+    const ma50 = calculateMA(prices, 50);
+    const signal = generateSignal(rsi, ma20, ma50, 0);
+    const confidence = getConfidenceScore(prices);
 
-      return {
-        symbol: etf,
-        price: closes[closes.length - 1] || 0,
-        change: ((closes[closes.length - 1] - closes[Math.max(0, closes.length - 6)]) / closes[Math.max(0, closes.length - 6)] * 100) || 0,
-        history,
-        timestamp: Date.now(),
-      };
-    }
+    const changePercent = ((json.currentPrice - json.previousClose) / json.previousClose * 100);
 
-    return null;
+    return {
+      symbol,
+      price: json.currentPrice,
+      change: parseFloat(changePercent.toFixed(2)),
+      rsi,
+      trend: rsi > 65 ? 'Haussière' : rsi < 35 ? 'Baissière' : 'Neutre',
+      momentum: ma20 && ma50 ? ((prices[prices.length - 1] - prices[Math.max(0, prices.length - 20)]) / prices[Math.max(0, prices.length - 20)] * 100) : 0,
+      conviction: confidence,
+      signal,
+      history,
+      isLive: !json.isFallback,
+      latency: json.latency || 0,
+      timestamp: Date.now(),
+    };
   } catch (e) {
-    console.warn(`Failed to fetch ${etf} from API:`, e);
+    console.warn(`Failed to fetch ${symbol}:`, e);
     return null;
   }
 };
 
 /**
- * Load cached data, try API, fallback to hardcoded
+ * Load from cache or fetch fresh
  */
-const loadETFData = async (etf) => {
-  // Try cache first
+const loadETFData = async (symbol) => {
   const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
-  const cached = cache[etf];
+  const cached = cache[symbol];
 
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return cached;
   }
 
-  // Try API
-  const fresh = await fetchETFData(etf);
-
+  const fresh = await fetchETFData(symbol);
   if (fresh) {
-    cache[etf] = fresh;
+    cache[symbol] = fresh;
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
     return fresh;
   }
 
-  // Fallback to hardcoded
-  console.info(`Using hardcoded data for ${etf}`);
-  const hardcoded = {
-    ...HARDCODED_ETF_DATA[etf],
-    timestamp: Date.now(),
-  };
-  cache[etf] = hardcoded;
-  localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  return hardcoded;
+  return cached || null;
 };
 
 /**
- * Hook: Fetch and manage market data for all ETFs
+ * Market data hook with live/demo status
  */
 export const useMarketData = () => {
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [isLive, setIsLive] = useState(false);
+  const [avgLatency, setAvgLatency] = useState(0);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
         setLoading(true);
         const results = {};
+        const latencies = [];
 
-        // Fetch all ETFs in parallel
-        const promises = ETFS.map(etf => loadETFData(etf));
-        const responses = await Promise.all(promises);
+        const responses = await Promise.all(ETFS.map(etf => loadETFData(etf)));
 
         responses.forEach((response, i) => {
           if (response) {
             results[ETFS[i]] = response;
+            if (response.latency) latencies.push(response.latency);
           }
         });
 
         setData(results);
         setLastUpdate(new Date());
         setError(null);
+        setIsLive(responses.some(r => r?.isLive));
+        setAvgLatency(latencies.length > 0 ? Math.round(latencies.reduce((a,b) => a+b, 0) / latencies.length) : 0);
       } catch (e) {
         console.error('Error loading market data:', e);
         setError('Failed to load market data');
@@ -117,28 +112,10 @@ export const useMarketData = () => {
 
     fetchAll();
 
-    // Refresh every 5 minutes
+    // Refresh every 15 minutes
     const interval = setInterval(fetchAll, CACHE_DURATION);
     return () => clearInterval(interval);
   }, []);
 
-  const refresh = async () => {
-    // Clear cache and refetch
-    localStorage.removeItem(CACHE_KEY);
-    const results = {};
-
-    const promises = ETFS.map(etf => fetchETFData(etf));
-    const responses = await Promise.all(promises);
-
-    responses.forEach((response, i) => {
-      if (response) {
-        results[ETFS[i]] = response;
-      }
-    });
-
-    setData(results);
-    setLastUpdate(new Date());
-  };
-
-  return { data, loading, error, lastUpdate, refresh };
+  return { data, loading, error, lastUpdate, isLive, avgLatency };
 };
