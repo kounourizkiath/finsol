@@ -7,13 +7,14 @@ import { useMarketData } from './hooks/useMarketData';
 import { useDCASimulator } from './hooks/useDCASimulator';
 import { Navbar } from './components/layout/Navbar';
 import { PipelineStatusBar } from './components/layout/PipelineStatusBar';
+import { LandingPage } from './components/pages/LandingPage';
 import { StepMarket } from './components/steps/StepMarket';
 import { StepAnalysis } from './components/steps/StepAnalysis';
 import { StepDecision } from './components/steps/StepDecision';
 import { Documentation } from './components/steps/Documentation';
 
 function AppContent() {
-  const [step, setStep] = useState(1);
+  const [activeSection, setActiveSection] = useState('accueil');
   const [selectedETF, setSelectedETF] = useState('SPY');
   const [dcaAmount, setDcaAmount] = useState(200);
   const [dcaStart, setDcaStart] = useState('2023-01-01');
@@ -21,7 +22,7 @@ function AppContent() {
   const { t } = useLanguage();
   const reportRef = useRef();
 
-  // Try loading market data
+  // Market data
   const { data: etfData, loading, error, isLive, avgLatency, lastUpdate } = useMarketData();
   const dca = useDCASimulator(etfData, selectedETF, dcaAmount, dcaStart, dcaEnd);
 
@@ -41,82 +42,59 @@ function AppContent() {
     }
   };
 
+  const handleNavClick = (section) => {
+    setActiveSection(section);
+  };
+
   return (
-    <div style={{ background: '#0a0e27', minHeight: '100vh', color: '#f5f7fa' }}>
-      <Navbar currentStep={step} setStep={setStep} onExportPDF={exportPDF} />
+    <div style={{ background: '#0a0e27', minHeight: '100vh', color: '#f5f7fa', display: 'flex', flexDirection: 'column' }}>
+      <Navbar activeSection={activeSection} onNavClick={handleNavClick} onExportPDF={exportPDF} isLive={isLive} />
 
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 0' }}>
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#a8b2c7' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              border: '4px solid #3a4458',
-              borderTop: '4px solid #00d4aa',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 16px'
-            }}></div>
-            <p>Loading market data...</p>
+      <main style={{ flex: 1, paddingBottom: activeSection !== 'accueil' ? '120px' : '0' }}>
+        {/* LANDING */}
+        {activeSection === 'accueil' && (
+          <div style={{ animation: 'fadeInPage 0.3s ease-out' }}>
+            <LandingPage onStartAnalysis={() => setActiveSection('marche')} />
           </div>
         )}
 
-        {error && (
-          <div style={{
-            background: '#1a1f3a',
-            border: '1px solid #ef4444',
-            borderRadius: '8px',
-            padding: '40px',
-            textAlign: 'center',
-            margin: '24px'
-          }}>
-            <p style={{ color: '#ef4444', fontWeight: 'bold' }}>❌ Error loading data:</p>
-            <p style={{ color: '#a8b2c7', marginTop: '12px' }}>{error}</p>
+        {/* MARKET */}
+        {activeSection === 'marche' && (
+          <div style={{ animation: 'fadeInPage 0.3s ease-out', padding: '48px 24px', maxWidth: '1200px', margin: '0 auto' }}>
+            {loading && <div style={{ textAlign: 'center', padding: '60px' }}><div style={{ width: '48px', height: '48px', border: '4px solid #3a4458', borderTop: '4px solid #00d4aa', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} /><p>Loading...</p></div>}
+            {!loading && error && <div style={{ background: '#1a1f3a', border: '1px solid #ef4444', borderRadius: '8px', padding: '40px', textAlign: 'center' }}><p style={{ color: '#ef4444', fontWeight: 'bold' }}>Error: {error}</p></div>}
+            {!loading && !error && <StepMarket etfData={etfData} selectedETF={selectedETF} setSelectedETF={setSelectedETF} />}
           </div>
         )}
 
-        {!loading && !error && step === 1 && (
-          <div style={{ padding: '0 24px' }}>
-            <StepMarket
-              etfData={etfData}
-              selectedETF={selectedETF}
-              setSelectedETF={setSelectedETF}
-            />
+        {/* ANALYSIS */}
+        {activeSection === 'analyse' && (
+          <div style={{ animation: 'fadeInPage 0.3s ease-out', padding: '48px 24px', maxWidth: '1200px', margin: '0 auto' }}>
+            {!loading && !error && <StepAnalysis etfData={etfData} />}
           </div>
         )}
 
-        {!loading && !error && step === 2 && (
-          <div style={{ padding: '0 24px' }}>
-            <StepAnalysis
-              etfData={etfData}
-            />
+        {/* DECISION */}
+        {activeSection === 'decision' && (
+          <div style={{ animation: 'fadeInPage 0.3s ease-out', padding: '48px 24px', maxWidth: '1200px', margin: '0 auto' }}>
+            {!loading && !error && <StepDecision etfData={etfData} selectedETF={selectedETF} setSelectedETF={setSelectedETF} dcaAmount={dcaAmount} setDcaAmount={setDcaAmount} dcaStart={dcaStart} setDcaStart={setDcaStart} dcaEnd={dcaEnd} setDcaEnd={setDcaEnd} dca={dca} onExportPDF={exportPDF} />}
           </div>
         )}
 
-        {!loading && !error && step === 3 && (
-          <div style={{ padding: '0 24px' }}>
-            <StepDecision
-              etfData={etfData}
-              selectedETF={selectedETF}
-              setSelectedETF={setSelectedETF}
-              dcaAmount={dcaAmount}
-              setDcaAmount={setDcaAmount}
-              dcaStart={dcaStart}
-              setDcaStart={setDcaStart}
-              dcaEnd={dcaEnd}
-              setDcaEnd={setDcaEnd}
-              dca={dca}
-              onExportPDF={exportPDF}
-            />
+        {/* DOCS */}
+        {activeSection === 'docs' && (
+          <div style={{ animation: 'fadeInPage 0.3s ease-out' }}>
+            <Documentation />
           </div>
-        )}
-
-        {step === 4 && (
-          <Documentation />
         )}
       </main>
 
-      <PipelineStatusBar isLive={isLive} avgLatency={avgLatency} lastUpdate={lastUpdate} />
+      {activeSection !== 'accueil' && <PipelineStatusBar isLive={isLive} avgLatency={avgLatency} lastUpdate={lastUpdate} />}
+
+      <style>{`
+        @keyframes fadeInPage { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

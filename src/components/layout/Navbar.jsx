@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
-export const Navbar = ({ currentStep, setStep, onExportPDF }) => {
+export const Navbar = ({ activeSection, onNavClick, onExportPDF, isLive = false }) => {
   const { lang, setLang, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { id: 1, label: 'Marché', key: 'step1' },
-    { id: 2, label: 'Analyse', key: 'step2' },
-    { id: 3, label: 'Décision', key: 'step3' },
-    { id: 4, label: '📚 Docs', key: 'docs' }
+    { id: 'accueil', label: 'Accueil', key: 'accueil' },
+    { id: 'marche', label: 'Marché', key: 'marche' },
+    { id: 'analyse', label: 'Analyse', key: 'analyse' },
+    { id: 'decision', label: 'Décision', key: 'decision' },
+    { id: 'docs', label: '📚 Docs', key: 'docs' }
   ];
 
   const handleNavClick = (id) => {
-    setStep(id);
+    onNavClick(id);
     setMobileMenuOpen(false);
   };
 
