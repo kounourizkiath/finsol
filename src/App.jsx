@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { useMarketData } from './hooks/useMarketData';
+import { StepMarket } from './components/steps/StepMarket';
 
 // Lazy load heavy components to prevent blocking
 const Header = ({ onExportPDF, lastUpdate }) => {
@@ -41,6 +42,7 @@ const Header = ({ onExportPDF, lastUpdate }) => {
 
 function AppContent() {
   const [step, setStep] = useState(1);
+  const [selectedETF, setSelectedETF] = useState('SPY');
   const { t } = useLanguage();
   const reportRef = useRef();
   const [lastUpdate] = useState(new Date());
@@ -68,61 +70,81 @@ function AppContent() {
     <div style={{ background: '#0a0e27', minHeight: '100vh', color: '#f5f7fa' }}>
       <Header onExportPDF={exportPDF} lastUpdate={lastUpdate} />
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
-        <div style={{
-          background: '#1a1f3a',
-          border: '1px solid #3a4458',
-          borderRadius: '8px',
-          padding: '40px',
-          textAlign: 'center'
-        }}>
-          <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#00d4aa', marginBottom: '16px' }}>
-            ✅ MarketSync Pro
-          </h1>
-          <p style={{ fontSize: '18px', color: '#a8b2c7', marginBottom: '24px' }}>
-            App is rendering successfully!
-          </p>
-          <p style={{ color: '#a8b2c7', marginBottom: '12px' }}>
-            Current Step: <span style={{ color: '#00d4aa', fontWeight: 'bold' }}>{step}/3</span>
-          </p>
-
-          {loading && <p style={{ color: '#00d4aa', marginBottom: '16px' }}>📊 Loading market data...</p>}
-          {error && <p style={{ color: '#ef4444', marginBottom: '16px' }}>❌ Error: {error}</p>}
-          {!loading && !error && (
-            <p style={{ color: '#10b981', marginBottom: '16px' }}>
-              ✅ Market data loaded! ({Object.keys(etfData).length} ETFs)
-            </p>
-          )}
-
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-            {[1, 2, 3].map(s => (
-              <button
-                key={s}
-                onClick={() => setStep(s)}
-                style={{
-                  background: step === s ? '#00d4aa' : '#242d4a',
-                  color: step === s ? '#0a0e27' : '#f5f7fa',
-                  padding: '10px 20px',
-                  border: '1px solid #3a4458',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s'
-                }}
-              >
-                Step {s}
-              </button>
-            ))}
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 0' }}>
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#a8b2c7' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              border: '4px solid #3a4458',
+              borderTop: '4px solid #00d4aa',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px'
+            }}></div>
+            <p>Loading market data...</p>
           </div>
+        )}
 
-          <p style={{ color: '#a8b2c7', marginTop: '32px', fontSize: '12px' }}>
-            🎉 If you see this, ErrorBoundary is working and React is rendering properly
-          </p>
-          <p style={{ color: '#a8b2c7', fontSize: '12px' }}>
-            🔍 Check browser console for any JavaScript errors
-          </p>
-        </div>
-      </div>
+        {error && (
+          <div style={{
+            background: '#1a1f3a',
+            border: '1px solid #ef4444',
+            borderRadius: '8px',
+            padding: '40px',
+            textAlign: 'center',
+            margin: '24px'
+          }}>
+            <p style={{ color: '#ef4444', fontWeight: 'bold' }}>❌ Error loading data:</p>
+            <p style={{ color: '#a8b2c7', marginTop: '12px' }}>{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && step === 1 && (
+          <div style={{ padding: '0 24px' }}>
+            <StepMarket
+              etfData={etfData}
+              selectedETF={selectedETF}
+              setSelectedETF={setSelectedETF}
+              onNext={() => setStep(2)}
+              onPrevious={() => setStep(0)}
+            />
+          </div>
+        )}
+
+        {!loading && !error && step !== 1 && (
+          <div style={{
+            background: '#1a1f3a',
+            border: '1px solid #3a4458',
+            borderRadius: '8px',
+            padding: '40px',
+            textAlign: 'center',
+            margin: '24px'
+          }}>
+            <h2 style={{ color: '#00d4aa', marginBottom: '16px' }}>Step {step}</h2>
+            <p style={{ color: '#a8b2c7' }}>Component for step {step} coming soon...</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px' }}>
+              {[1, 2, 3].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setStep(s)}
+                  style={{
+                    background: step === s ? '#00d4aa' : '#242d4a',
+                    color: step === s ? '#0a0e27' : '#f5f7fa',
+                    padding: '10px 20px',
+                    border: '1px solid #3a4458',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Step {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
