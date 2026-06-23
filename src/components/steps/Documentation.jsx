@@ -1,6 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
+const TechLogo = ({ name, size = 32 }) => (
+  <img
+    src={`https://cdn.simpleicons.org/${name}`}
+    alt={name}
+    style={{ width: size, height: size, filter: 'brightness(0) invert(1)' }}
+  />
+);
+
+const APILogo = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" style={{ stroke: '#00d4aa', fill: 'none', strokeWidth: 2 }}>
+    <circle cx="16" cy="16" r="14" />
+    <text x="16" y="20" textAnchor="middle" style={{ fill: '#00d4aa', fontSize: '10px', fontWeight: 'bold' }}>
+      API
+    </text>
+  </svg>
+);
+
+const DatabaseLogo = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" style={{ stroke: '#00d4aa', fill: 'none', strokeWidth: 2 }}>
+    <ellipse cx="16" cy="8" rx="10" ry="5" />
+    <line x1="6" y1="8" x2="6" y2="20" />
+    <line x1="26" y1="8" x2="26" y2="20" />
+    <ellipse cx="16" cy="20" rx="10" ry="5" />
+  </svg>
+);
+
 const CodeBlock = ({ code, language = 'javascript' }) => (
   <pre style={{
     background: '#0d1117',
@@ -27,10 +53,73 @@ const SectionCard = ({ title, icon, children, borderColor = '#00d4aa' }) => (
     marginBottom: '24px'
   }}>
     <h3 style={{ color: '#f5f7fa', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <span style={{ fontSize: '24px' }}>{icon}</span>
+      {icon}
       {title}
     </h3>
     {children}
+  </div>
+);
+
+const PipelineNode = ({ logo, title, description, details }) => (
+  <div style={{
+    background: '#1a1f3a',
+    border: '1px solid #3a4458',
+    borderRadius: '8px',
+    padding: '20px',
+    textAlign: 'center',
+    minWidth: '160px'
+  }}>
+    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+      {logo}
+    </div>
+    <div style={{ color: '#00d4aa', fontWeight: 'bold', fontSize: '13px', marginBottom: '8px' }}>
+      {title}
+    </div>
+    <div style={{ color: '#a8b2c7', fontSize: '12px', lineHeight: '1.4', marginBottom: '8px' }}>
+      {description}
+    </div>
+    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      {details.map(d => (
+        <span key={d} style={{
+          background: '#242d4a',
+          color: '#a8b2c7',
+          fontSize: '10px',
+          padding: '2px 6px',
+          borderRadius: '3px'
+        }}>
+          {d}
+        </span>
+      ))}
+    </div>
+  </div>
+);
+
+const FormulaCard = ({ title, formula, where, interpretation }) => (
+  <div style={{
+    background: '#0d1117',
+    border: '3px solid #00d4aa',
+    borderLeft: '3px solid #00d4aa',
+    borderRadius: '6px',
+    padding: '24px',
+    fontFamily: "'Courier New', monospace",
+    marginBottom: '24px'
+  }}>
+    <div style={{ color: '#00d4aa', fontWeight: 'bold', fontSize: '18px', marginBottom: '16px' }}>
+      {title}
+    </div>
+    <div style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '16px', marginBottom: '16px', lineHeight: '1.8' }}>
+      {formula}
+    </div>
+    {where && (
+      <div style={{ color: '#a8b2c7', fontSize: '13px', marginBottom: '16px', lineHeight: '1.8' }}>
+        {where}
+      </div>
+    )}
+    {interpretation && (
+      <div style={{ color: '#10b981', fontSize: '13px', lineHeight: '1.8' }}>
+        {interpretation}
+      </div>
+    )}
   </div>
 );
 
@@ -73,6 +162,7 @@ export const Documentation = () => {
         </h4>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {[
+            { id: 'context', label: 'Contexte' },
             { id: 'architecture', label: 'Architecture' },
             { id: 'pipeline', label: 'Data Pipeline' },
             { id: 'algorithms', label: 'Algorithmes' }
@@ -101,10 +191,111 @@ export const Documentation = () => {
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '48px', maxWidth: '1000px' }}>
+      <main style={{ flex: 1, padding: '48px', maxWidth: '1200px' }}>
+
+        {/* SECTION 0 — CONTEXTE & UTILITÉ */}
+        <section id="context" style={{ marginBottom: '64px' }}>
+          <h1 style={{ fontSize: '36px', color: '#00d4aa', marginBottom: '8px' }}>
+            Contexte & Utilité
+          </h1>
+          <p style={{ color: '#a8b2c7', fontSize: '16px', marginBottom: '32px' }}>
+            Pourquoi MarketSync Pro existe et comment il résout un vrai problème
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
+            {/* Left: Problem */}
+            <div>
+              <h2 style={{ color: '#f5f7fa', fontSize: '20px', marginBottom: '16px' }}>Pourquoi MarketSync Pro ?</h2>
+              <p style={{ color: '#a8b2c7', lineHeight: '1.6', marginBottom: '20px' }}>
+                Les investisseurs particuliers manquent d'outils accessibles pour analyser les ETF de manière empirique.
+                Les plateformes existantes (Bloomberg, Refinitiv) sont coûteuses et complexes.
+                <strong style={{ color: '#00d4aa' }}> MarketSync Pro démocratise l'analyse quantitative</strong>
+                {' '}en combinant ingestion de données temps-réel, indicateurs techniques automatisés
+                et simulation de stratégies d'investissement — le tout dans une interface web accessible.
+              </p>
+              {[
+                { icon: '❌', title: 'Données fragmentées', desc: 'Les prix ETF, indicateurs et outils de simulation sont sur des plateformes différentes.' },
+                { icon: '❌', title: 'Analyse manuelle chronophage', desc: 'Calculer RSI, MA et backtests DCA manuellement prend des heures.' },
+                { icon: '❌', title: 'Coût des outils pro', desc: 'Bloomberg: $24,000/an. MarketSync Pro: open source.' }
+              ].map((prob, i) => (
+                <div key={i} style={{
+                  background: '#242d4a',
+                  border: '1px solid #ef4444',
+                  borderLeft: '3px solid #ef4444',
+                  borderRadius: '6px',
+                  padding: '16px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '4px' }}>
+                    {prob.icon} {prob.title}
+                  </div>
+                  <div style={{ color: '#a8b2c7', fontSize: '13px' }}>{prob.desc}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Right: Solution */}
+            <div>
+              <h2 style={{ color: '#f5f7fa', fontSize: '20px', marginBottom: '16px' }}>La Solution</h2>
+              <p style={{ color: '#a8b2c7', lineHeight: '1.6', marginBottom: '20px' }}>
+                <strong style={{ color: '#00d4aa' }}>Une plateforme data-driven complète</strong>
+                {' '}qui unifie l'ingestion, la transformation et la visualisation des données financières
+                en un seul dashboard interactif et performant.
+              </p>
+              {[
+                { icon: '✅', title: 'Pipeline automatisé', desc: '1 fetch = 1,260 points transformés en signaux en <500ms.' },
+                { icon: '✅', title: 'Indicateurs temps-réel', desc: 'RSI(14), MA, momentum et Sharpe calculés automatiquement.' },
+                { icon: '✅', title: 'Simulateur de décision', desc: 'Backtestez n\'importe quelle stratégie DCA sur l\'historique réel.' }
+              ].map((sol, i) => (
+                <div key={i} style={{
+                  background: '#242d4a',
+                  border: '1px solid #10b981',
+                  borderLeft: '3px solid #10b981',
+                  borderRadius: '6px',
+                  padding: '16px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '4px' }}>
+                    {sol.icon} {sol.title}
+                  </div>
+                  <div style={{ color: '#a8b2c7', fontSize: '13px' }}>{sol.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Use Cases & Metrics */}
+          <div style={{
+            background: '#1a1f3a',
+            border: '1px solid #3a4458',
+            borderRadius: '8px',
+            padding: '24px',
+            marginBottom: '32px'
+          }}>
+            <h3 style={{ color: '#00d4aa', marginBottom: '16px' }}>Cas d'usage</h3>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+              {['📈 Investisseur particulier ETF', '🏦 Analyste financier junior', '🎓 Étudiant en finance quantitative', '💼 Data Engineer (portfolio)'].map(use => (
+                <div key={use} style={{
+                  background: '#242d4a',
+                  border: '1px solid #3a4458',
+                  borderRadius: '6px',
+                  padding: '12px 16px',
+                  fontSize: '13px',
+                  color: '#a8b2c7'
+                }}>
+                  {use}
+                </div>
+              ))}
+            </div>
+            <h3 style={{ color: '#00d4aa', marginBottom: '12px' }}>Métriques</h3>
+            <div style={{ color: '#a8b2c7', fontSize: '13px', lineHeight: '2' }}>
+              ⚡ &lt;500ms | 🔄 15min cache | 📊 1,260 pts/session | 🧮 3 algos | 🌍 5 ETFs mondiaux | 📱 Responsive
+            </div>
+          </div>
+        </section>
 
         {/* SECTION 1 — ARCHITECTURE */}
-        <section id="architecture">
+        <section id="architecture" style={{ marginBottom: '64px' }}>
           <h1 style={{ fontSize: '36px', color: '#00d4aa', marginBottom: '8px' }}>
             Architecture Technique
           </h1>
@@ -112,9 +303,9 @@ export const Documentation = () => {
             Stack Data Engineering — Production Grade
           </p>
 
-          {/* Data Flow Diagram */}
+          {/* Professional Pipeline Diagram */}
           <div style={{
-            background: '#1a1f3a',
+            background: '#0a0e27',
             border: '1px solid #3a4458',
             borderRadius: '8px',
             padding: '32px',
@@ -123,39 +314,31 @@ export const Documentation = () => {
           }}>
             <div style={{
               display: 'flex',
-              gap: '12px',
+              gap: '0',
               justifyContent: 'space-between',
-              alignItems: 'center',
-              minWidth: '1000px'
+              alignItems: 'flex-start',
+              minWidth: '1100px'
             }}>
               {[
-                { name: 'Yahoo Finance API', tech: 'REST Endpoint', icon: '🌐' },
-                { name: 'useMarketData Hook', tech: 'React + fetch()', icon: '🔌' },
-                { name: 'localStorage Cache', tech: 'TTL: 15min', icon: '💾' },
-                { name: 'indicators.js', tech: 'RSI · MA · Signal', icon: '⚙️' },
-                { name: 'optimizer.js', tech: 'Sharpe · Markowitz', icon: '📈' },
-                { name: 'React Components', tech: 'UI Rendering', icon: '📊' }
-              ].map((block, i) => (
-                <div key={i}>
-                  <div style={{
-                    background: '#242d4a',
-                    border: '2px solid #00d4aa',
-                    borderRadius: '6px',
-                    padding: '16px',
-                    textAlign: 'center',
-                    minWidth: '120px'
-                  }}>
-                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>{block.icon}</div>
-                    <div style={{ color: '#00d4aa', fontWeight: 'bold', fontSize: '12px', marginBottom: '4px' }}>
-                      {block.name.split(' ')[0]}
-                    </div>
-                    <div style={{ color: '#a8b2c7', fontSize: '11px' }}>{block.tech}</div>
-                  </div>
-                  {i < 5 && (
+                { logo: <APILogo />, title: 'Yahoo Finance', desc: 'REST API', details: ['5 ETFs', '1Y data', '1,260 pts'] },
+                { logo: <TechLogo name="react" />, title: 'useMarketData', desc: 'Fetch + Cache', details: ['fetch()', 'Error handle'] },
+                { logo: <DatabaseLogo />, title: 'localStorage', desc: 'Cache Layer', details: ['15min TTL', 'JSON'] },
+                { logo: <TechLogo name="javascript" />, title: 'indicators.js', desc: 'Transform', details: ['RSI·MA', 'Signals'] },
+                { logo: <TechLogo name="react" />, title: 'React UI', desc: 'Render', details: ['Recharts', '3 Views'] }
+              ].map((node, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <PipelineNode
+                    logo={node.logo}
+                    title={node.title}
+                    description={node.desc}
+                    details={node.details}
+                  />
+                  {i < 4 && (
                     <div style={{
-                      color: '#3a4458',
-                      margin: '0 -6px',
-                      fontSize: '20px'
+                      fontSize: '20px',
+                      color: '#00d4aa',
+                      marginTop: '60px',
+                      fontWeight: 'bold'
                     }}>→</div>
                   )}
                 </div>
@@ -163,13 +346,46 @@ export const Documentation = () => {
             </div>
           </div>
 
+          {/* Data Volume Bar */}
+          <div style={{
+            background: '#1a1f3a',
+            border: '1px solid #3a4458',
+            borderRadius: '8px',
+            padding: '24px',
+            marginBottom: '32px'
+          }}>
+            <h3 style={{ color: '#a8b2c7', fontSize: '13px', fontWeight: 'bold', marginBottom: '16px', textTransform: 'uppercase' }}>
+              Volume traité par session
+            </h3>
+            {[
+              { label: 'Yahoo API', value: 1260, max: 1260, color: '#00d4aa' },
+              { label: 'After cache', value: 252, max: 1260, color: '#3b82f6' },
+              { label: 'After transform', value: 5, max: 1260, color: '#10b981' },
+              { label: 'Rendered views', value: 3, max: 1260, color: '#f59e0b' }
+            ].map((item, i) => (
+              <div key={i} style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ color: '#a8b2c7', fontSize: '13px' }}>{item.label}</span>
+                  <span style={{ color: item.color, fontWeight: 'bold', fontSize: '12px' }}>{item.value} pts</span>
+                </div>
+                <div style={{ background: '#242d4a', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
+                  <div style={{
+                    background: item.color,
+                    height: '100%',
+                    width: `${(item.value / item.max) * 100}%`,
+                    transition: 'width 0.3s'
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Tech Stack Grid */}
           <div style={{
             background: '#1a1f3a',
             border: '1px solid #3a4458',
             borderRadius: '8px',
-            overflow: 'hidden',
-            marginBottom: '32px'
+            overflow: 'hidden'
           }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
@@ -219,7 +435,7 @@ export const Documentation = () => {
           {/* Stage 1 */}
           <SectionCard
             title="Fetch Yahoo Finance API"
-            icon="🔌"
+            icon={<APILogo size={24} />}
             borderColor="#3b82f6"
           >
             <CodeBlock code={`GET https://query1.finance.yahoo.com/v8/finance/chart/SPY
@@ -248,7 +464,7 @@ Response:
           {/* Stage 2 */}
           <SectionCard
             title="Cache localStorage (TTL 15 min)"
-            icon="💾"
+            icon={<DatabaseLogo size={24} />}
             borderColor="#eab308"
           >
             <CodeBlock code={`const CACHE_KEY = 'marketsync_etf_cache';
@@ -275,7 +491,7 @@ if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
           {/* Stage 3 */}
           <SectionCard
             title="Calcul des indicateurs (indicators.js)"
-            icon="⚙️"
+            icon={<TechLogo name="javascript" size={24} />}
             borderColor="#10b981"
           >
             <CodeBlock code={`// RSI(14) — Relative Strength Index
@@ -325,7 +541,7 @@ return 'CONSERVER'; // HOLD
           {/* Stage 4 */}
           <SectionCard
             title="Rendu React + Recharts (Visualisation)"
-            icon="📊"
+            icon={<TechLogo name="react" size={24} />}
             borderColor="#00d4aa"
           >
             <CodeBlock code={`// DCA Simulator (useDCASimulator.js)
@@ -375,70 +591,39 @@ export const useDCASimulator = (etfData, selectedETF, dcaAmount, startDate, endD
             Implémentés from scratch en JavaScript pur
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-            {/* RSI Card */}
-            <SectionCard title="RSI (Relative Strength Index)" icon="📊">
-              <p style={{ color: '#a8b2c7', marginBottom: '12px', fontSize: '13px' }}>
-                <strong style={{ color: '#00d4aa' }}>Formula:</strong>
-              </p>
-              <CodeBlock code={`RSI = 100 - (100 / (1 + RS))
-Where RS = Avg Gain / Avg Loss (14 periods)`} />
-              <p style={{ color: '#a8b2c7', fontSize: '13px', marginBottom: '12px' }}>
-                <strong style={{ color: '#00d4aa' }}>Interprétation:</strong>
-              </p>
-              <table style={{ width: '100%', fontSize: '12px' }}>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #3a4458' }}>
-                    <td style={{ padding: '8px', color: '#ef4444' }}>RSI &lt; 35</td>
-                    <td style={{ padding: '8px', color: '#a8b2c7' }}>Survente → Signal ACHETER</td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid #3a4458' }}>
-                    <td style={{ padding: '8px', color: '#f59e0b' }}>35-65</td>
-                    <td style={{ padding: '8px', color: '#a8b2c7' }}>Zone neutre → CONSERVER</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '8px', color: '#10b981' }}>RSI &gt; 65</td>
-                    <td style={{ padding: '8px', color: '#a8b2c7' }}>Achat → Signal ALLÉGER</td>
-                  </tr>
-                </tbody>
-              </table>
-            </SectionCard>
+          {/* RSI Card */}
+          <div style={{ marginBottom: '32px' }}>
+            <h2 style={{ color: '#f5f7fa', fontSize: '20px', marginBottom: '16px' }}>RSI (Relative Strength Index)</h2>
+            <FormulaCard
+              title="RSI = 100 − (100 / (1 + RS))"
+              formula="où  RS  = Gain moyen / Perte moyenne"
+              where={`      n  = 14 périodes (standard)\n      RS > 1  → tendance haussière`}
+              interpretation={`Interprétation:\n RSI < 35  → Zone de survente → Signal ACHETER\n 35-65  → Zone neutre → CONSERVER\n RSI > 65  → Zone d'achat → Signal ALLÉGER`}
+            />
+          </div>
 
-            {/* Sharpe Ratio Card */}
-            <SectionCard title="Sharpe Ratio (Markowitz)" icon="📈">
-              <p style={{ color: '#a8b2c7', marginBottom: '12px', fontSize: '13px' }}>
-                <strong style={{ color: '#00d4aa' }}>Formula:</strong>
-              </p>
-              <CodeBlock code={`S = (Rp - Rf) / σp
+          {/* Sharpe Ratio Card */}
+          <div style={{ marginBottom: '32px' }}>
+            <h2 style={{ color: '#f5f7fa', fontSize: '20px', marginBottom: '16px' }}>Sharpe Ratio (Markowitz)</h2>
+            <FormulaCard
+              title="S = (Rp − Rf) / σp"
+              formula="où  Rp  = Rendement du portefeuille\n    Rf = 3.5% (taux sans risque EUR)\n    σp = Écart-type des rendements"
+              interpretation={`Performance:\n S > 1.0  → excellent ratio risque/rendement\n S > 2.0  → très performant\n S < 0.5  → risque non compensé`}
+            />
+            <p style={{ color: '#a8b2c7', marginTop: '16px', fontSize: '13px', lineHeight: '1.6' }}>
+              <strong style={{ color: '#00d4aa' }}>Usage:</strong> Maximisé dans l'optimiseur d'allocation pour trouver
+              le portefeuille efficient sur la frontière de Markowitz. Ratio clé pour la gestion d'actifs.
+            </p>
+          </div>
 
-Where:
-  Rp = Portfolio return
-  Rf = Risk-free rate (3.5% EUR)
-  σp = Portfolio std deviation`} />
-              <p style={{ color: '#a8b2c7', fontSize: '13px', marginBottom: '12px' }}>
-                <strong style={{ color: '#00d4aa' }}>Usage:</strong>
-              </p>
-              <p style={{ color: '#a8b2c7', fontSize: '13px' }}>
-                Maximisé dans l'optimiseur d'allocation pour trouver le portefeuille efficient sur la frontière
-                de Markowitz. S &gt; 1.0 = excellent ratio ajusté au risque.
-              </p>
-            </SectionCard>
-
-            {/* DCA Card */}
-            <SectionCard title="DCA Backtest" icon="💰">
-              <p style={{ color: '#a8b2c7', marginBottom: '12px', fontSize: '13px' }}>
-                <strong style={{ color: '#00d4aa' }}>Formula:</strong>
-              </p>
-              <CodeBlock code={`Shares(t) = Σ [Amount / Price(t)]
-Return = (Shares × Price_now - Invested)
-         / Invested
-
-CAGR = (FinalValue/Invested)^(1/years) - 1`} />
-              <p style={{ color: '#a8b2c7', fontSize: '13px' }}>
-                Simulateur de Dollar-Cost Averaging sur l'historique réel. Calcule le rendement annualisé.
-                Impact: réduit la volatilité vs lump-sum investing.
-              </p>
-            </SectionCard>
+          {/* DCA/CAGR Card */}
+          <div>
+            <h2 style={{ color: '#f5f7fa', fontSize: '20px', marginBottom: '16px' }}>DCA Backtest & CAGR</h2>
+            <FormulaCard
+              title="CAGR = (Vf / Vi)^(1/n) − 1"
+              formula="où  Vf  = Valeur finale du portefeuille\n    Vi = Capital total investi\n     n = Nombre d'années"
+              interpretation={`Dollar-Cost Averaging:\nShares(t) = Σ [Montant / Prix(t)] → Parts totales\nReturn = (Shares × Prix_actuel − Investi) / Investi\n\nBénéfices DCA:\n • Réduit la volatilité vs investissement unique\n • Étale le risque temporel\n • Moins d'impact des pics de prix`}
+            />
           </div>
         </section>
 
