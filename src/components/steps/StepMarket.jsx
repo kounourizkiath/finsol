@@ -3,21 +3,36 @@ import { KPICard } from '../cards/KPICard';
 import { ETFCard } from '../cards/ETFCard';
 import { PerformanceChart } from '../charts/PerformanceChart';
 import { calcVolatility, calcAverageCorrelation } from '../../utils/indicators';
+import { useLanguage } from '../../context/LanguageContext';
 
-export const StepMarket = ({ etfData, selectedETF, setSelectedETF, onNext, onPrevious, labels }) => {
+export const StepMarket = ({ etfData, selectedETF, setSelectedETF, onNext, onPrevious }) => {
+  const { t } = useLanguage();
   const [animatedKPIs, setAnimatedKPIs] = useState({});
 
   // Animate KPI numbers on mount
   useEffect(() => {
     if (Object.keys(etfData).length === 0) return;
 
-    const changes = Object.values(etfData).map(d => d.change || 0);
-    const bestPerf = Math.max(...changes);
-    const worstPerf = Math.min(...changes);
+    // Guard against empty or invalid data
+    const changes = Object.values(etfData)
+      .map(d => {
+        if (!d || typeof d.change !== 'number') return 0;
+        return isFinite(d.change) ? d.change : 0;
+      })
+      .filter(x => x !== null && x !== undefined);
 
-    const priceArrays = Object.values(etfData).map(d => d.history?.map(h => h.price) || []);
-    const avgVol = calcVolatility(priceArrays[0] || []) * 100;
-    const avgCorr = calcAverageCorrelation(priceArrays);
+    const bestPerf = changes.length > 0 ? Math.max(...changes) : 0;
+    const worstPerf = changes.length > 0 ? Math.min(...changes) : 0;
+
+    const priceArrays = Object.values(etfData)
+      .map(d => {
+        if (!d || !d.history || !Array.isArray(d.history)) return [];
+        return d.history.map(h => h.price).filter(p => typeof p === 'number' && isFinite(p));
+      })
+      .filter(arr => arr.length > 0);
+
+    const avgVol = priceArrays.length > 0 ? calcVolatility(priceArrays[0]) * 100 : 0;
+    const avgCorr = priceArrays.length > 1 ? calcAverageCorrelation(priceArrays) : 0;
 
     // Simulate count-up animation
     let frame = 0;
@@ -40,21 +55,21 @@ export const StepMarket = ({ etfData, selectedETF, setSelectedETF, onNext, onPre
 
   const kpis = [
     {
-      label: labels.bestPerf,
+      label: t.bestPerf,
       value: `${animatedKPIs.best || 0}%`,
       color: '#10b981',
     },
     {
-      label: labels.worstPerf,
+      label: t.worstPerf,
       value: `${animatedKPIs.worst || 0}%`,
       color: '#ef4444',
     },
     {
-      label: labels.avgVolatility,
+      label: t.avgVol,
       value: `${animatedKPIs.vol || 0}%`,
     },
     {
-      label: labels.avgCorrelation,
+      label: t.avgCorr,
       value: animatedKPIs.corr || '0.00',
     },
   ];
@@ -103,7 +118,7 @@ export const StepMarket = ({ etfData, selectedETF, setSelectedETF, onNext, onPre
           onClick={onNext}
           className="bg-gradient-to-r from-[#00d4aa] to-[#00a878] text-[#0a0e27] font-bold px-6 py-3 rounded-lg hover:shadow-lg transition"
         >
-          {labels.next} →
+          {t.next}
         </button>
       </div>
     </div>

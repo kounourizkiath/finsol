@@ -13,25 +13,26 @@ import { StepDecision } from './components/steps/StepDecision';
 
 import { useMarketData } from './hooks/useMarketData';
 import { useDCASimulator } from './hooks/useDCASimulator';
+import { useLanguage } from './context/LanguageContext';
+import { LanguageProvider } from './context/LanguageContext';
 
-import { TRANSLATIONS } from './constants/etfConfig';
-
-export default function App() {
+function AppContent() {
   // State management
   const [step, setStep] = useState(1);
-  const [language, setLanguage] = useState('FR');
   const [selectedETF, setSelectedETF] = useState('SPY');
   const [dcaAmount, setDcaAmount] = useState(200);
   const [dcaStart, setDcaStart] = useState('2023-01-01');
   const [dcaEnd, setDcaEnd] = useState('2024-12-31');
   const [showOnboarding, setShowOnboarding] = useState(!localStorage.getItem('marketsync_onboarding_seen'));
 
+  // Language hook
+  const { t } = useLanguage();
+
   // Data hooks
   const { data: etfData, loading, lastUpdate } = useMarketData();
   const dca = useDCASimulator(etfData, selectedETF, dcaAmount, dcaStart, dcaEnd);
 
   const reportRef = useRef();
-  const labels = TRANSLATIONS[language];
 
   // PDF Export
   const exportPDF = async () => {
@@ -72,56 +73,67 @@ export default function App() {
       />
 
       <Header
-        language={language}
-        setLanguage={setLanguage}
         onExportPDF={exportPDF}
         lastUpdate={lastUpdate}
       />
 
-      <StepProgress currentStep={step} setCurrentStep={setStep} labels={labels} />
+      <StepProgress currentStep={step} setCurrentStep={setStep} />
 
       <main className="max-w-7xl mx-auto px-6 py-8 pb-24" ref={reportRef}>
-        {step === 1 && (
-          <StepMarket
-            etfData={etfData}
-            selectedETF={selectedETF}
-            setSelectedETF={setSelectedETF}
-            onNext={() => setStep(2)}
-            onPrevious={() => setStep(0)}
-            labels={labels}
-          />
-        )}
+        <div className="transition-opacity duration-500 ease-out" style={{ opacity: 1 }}>
+          {step === 1 && (
+            <div className="animate-fadeInUp">
+              <StepMarket
+                etfData={etfData}
+                selectedETF={selectedETF}
+                setSelectedETF={setSelectedETF}
+                onNext={() => setStep(2)}
+                onPrevious={() => setStep(0)}
+              />
+            </div>
+          )}
 
-        {step === 2 && (
-          <StepAnalysis
-            etfData={etfData}
-            onNext={() => setStep(3)}
-            onPrevious={() => setStep(1)}
-            labels={labels}
-          />
-        )}
+          {step === 2 && (
+            <div className="animate-fadeInUp">
+              <StepAnalysis
+                etfData={etfData}
+                onNext={() => setStep(3)}
+                onPrevious={() => setStep(1)}
+              />
+            </div>
+          )}
 
-        {step === 3 && (
-          <StepDecision
-            etfData={etfData}
-            selectedETF={selectedETF}
-            setSelectedETF={setSelectedETF}
-            dcaAmount={dcaAmount}
-            setDcaAmount={setDcaAmount}
-            dcaStart={dcaStart}
-            setDcaStart={setDcaStart}
-            dcaEnd={dcaEnd}
-            setDcaEnd={setDcaEnd}
-            dca={dca}
-            onExportPDF={exportPDF}
-            onNext={() => setStep(1)}
-            onPrevious={() => setStep(2)}
-            labels={labels}
-          />
-        )}
+          {step === 3 && (
+            <div className="animate-fadeInUp">
+              <StepDecision
+                etfData={etfData}
+                selectedETF={selectedETF}
+                setSelectedETF={setSelectedETF}
+                dcaAmount={dcaAmount}
+                setDcaAmount={setDcaAmount}
+                dcaStart={dcaStart}
+                setDcaStart={setDcaStart}
+                dcaEnd={dcaEnd}
+                setDcaEnd={setDcaEnd}
+                dca={dca}
+                onExportPDF={exportPDF}
+                onNext={() => setStep(1)}
+                onPrevious={() => setStep(2)}
+              />
+            </div>
+          )}
+        </div>
       </main>
 
       <PipelineStatusBar lastUpdate={lastUpdate} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

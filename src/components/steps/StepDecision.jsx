@@ -1,6 +1,7 @@
 import { DCAChart } from '../charts/DCAChart';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { ETFS } from '../../constants/etfConfig';
+import { useLanguage } from '../../context/LanguageContext';
 
 // Optimal allocation weights (from Markowitz)
 const OPTIMAL_ALLOCATION = {
@@ -11,7 +12,8 @@ const OPTIMAL_ALLOCATION = {
   '^FCHI': 12,
 };
 
-export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, setDcaAmount, dcaStart, setDcaStart, dcaEnd, setDcaEnd, dca, onExportPDF, onNext, onPrevious, labels }) => {
+export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, setDcaAmount, dcaStart, setDcaStart, dcaEnd, setDcaEnd, dca, onExportPDF, onNext, onPrevious }) => {
+  const { t } = useLanguage();
   if (!dca) {
     return (
       <div className="text-center py-12 text-[#a8b2c7]">
@@ -25,8 +27,8 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT: DCA Simulator (60%) */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-lg font-bold text-[#f5f7fa]">{labels.simulator}</h3>
-          <p className="text-[#a8b2c7] text-sm">Testez différentes stratégies d'investissement régulier</p>
+          <h3 className="text-lg font-bold text-[#f5f7fa]">{t.dcaTitle}</h3>
+          <p className="text-[#a8b2c7] text-sm">{t.dcaSubtitle}</p>
 
           {/* Controls */}
           <div className="bg-[#1a1f3a] border border-[#3a4458] rounded-lg p-6 space-y-4">
@@ -133,8 +135,8 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
 
         {/* RIGHT: Portfolio Optimizer (40%) */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-[#f5f7fa]">{labels.optimal}</h3>
-          <p className="text-[#a8b2c7] text-sm">Maximisation du ratio de Sharpe</p>
+          <h3 className="text-lg font-bold text-[#f5f7fa]">{t.optimTitle}</h3>
+          <p className="text-[#a8b2c7] text-sm">{t.optimSubtitle}</p>
 
           {/* Allocation Table */}
           <div className="bg-[#1a1f3a] border border-[#3a4458] rounded-lg p-4 space-y-3">
@@ -157,7 +159,7 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
             })}
 
             <button className="w-full mt-6 bg-[#00d4aa] text-[#0a0e27] font-bold py-2 rounded hover:shadow-lg transition">
-              Appliquer l'allocation
+              {t.applyAllocation}
             </button>
           </div>
 
@@ -174,7 +176,7 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
 
       {/* Disclaimer */}
       <div className="text-[#a8b2c7] text-xs p-3 bg-[#242d4a] rounded-lg border border-[#3a4458]">
-        ⚠️ <strong>Simulation à titre éducatif uniquement.</strong> Passé ne préjuge pas de l'avenir. Pas de conseil financier.
+        {t.disclaimer}
       </div>
 
       {/* Navigation */}
@@ -183,13 +185,13 @@ export const StepDecision = ({ etfData, selectedETF, setSelectedETF, dcaAmount, 
           onClick={onPrevious}
           className="border border-[#3a4458] text-[#f5f7fa] font-bold px-6 py-3 rounded-lg hover:border-[#00d4aa] transition"
         >
-          ← {labels.previous}
+          {t.prev}
         </button>
         <button
           onClick={onExportPDF}
           className="bg-gradient-to-r from-[#00d4aa] to-[#00a878] text-[#0a0e27] font-bold px-6 py-3 rounded-lg hover:shadow-lg transition"
         >
-          {labels.exportPdf}
+          {t.exportPdf}
         </button>
       </div>
     </div>

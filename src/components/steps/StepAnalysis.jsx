@@ -1,13 +1,15 @@
 import { SignalCard } from '../cards/SignalCard';
 import { CorrelationHeatmap } from '../charts/CorrelationHeatmap';
 import { ETFS } from '../../constants/etfConfig';
+import { useLanguage } from '../../context/LanguageContext';
 
-export const StepAnalysis = ({ etfData, onNext, onPrevious, labels }) => {
+export const StepAnalysis = ({ etfData, onNext, onPrevious }) => {
+  const { t } = useLanguage();
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-[#f5f7fa] mb-2">{labels.signals}</h3>
-        <p className="text-[#a8b2c7] text-sm mb-4">{labels.basedOn}</p>
+        <h3 className="text-lg font-bold text-[#f5f7fa] mb-2">{t.signals}</h3>
+        <p className="text-[#a8b2c7] text-sm mb-4">{t.signalsSubtitle}</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {ETFS.map(etf => {
             const prices = etfData[etf]?.history?.map(h => h.price) || [];
@@ -29,13 +31,13 @@ export const StepAnalysis = ({ etfData, onNext, onPrevious, labels }) => {
           onClick={onPrevious}
           className="border border-[#3a4458] text-[#f5f7fa] font-bold px-6 py-3 rounded-lg hover:border-[#00d4aa] transition"
         >
-          ← {labels.previous}
+          {t.prev}
         </button>
         <button
           onClick={onNext}
           className="bg-gradient-to-r from-[#00d4aa] to-[#00a878] text-[#0a0e27] font-bold px-6 py-3 rounded-lg hover:shadow-lg transition"
         >
-          {labels.next} →
+          {t.next}
         </button>
       </div>
     </div>
