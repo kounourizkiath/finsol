@@ -4,7 +4,10 @@ import jsPDF from 'jspdf';
 
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { useMarketData } from './hooks/useMarketData';
+import { useDCASimulator } from './hooks/useDCASimulator';
 import { StepMarket } from './components/steps/StepMarket';
+import { StepAnalysis } from './components/steps/StepAnalysis';
+import { StepDecision } from './components/steps/StepDecision';
 
 // Lazy load heavy components to prevent blocking
 const Header = ({ onExportPDF, lastUpdate }) => {
@@ -43,12 +46,16 @@ const Header = ({ onExportPDF, lastUpdate }) => {
 function AppContent() {
   const [step, setStep] = useState(1);
   const [selectedETF, setSelectedETF] = useState('SPY');
+  const [dcaAmount, setDcaAmount] = useState(200);
+  const [dcaStart, setDcaStart] = useState('2023-01-01');
+  const [dcaEnd, setDcaEnd] = useState('2024-12-31');
   const { t } = useLanguage();
   const reportRef = useRef();
   const [lastUpdate] = useState(new Date());
 
   // Try loading market data
   const { data: etfData, loading, error } = useMarketData();
+  const dca = useDCASimulator(etfData, selectedETF, dcaAmount, dcaStart, dcaEnd);
 
   const exportPDF = async () => {
     try {
@@ -112,36 +119,33 @@ function AppContent() {
           </div>
         )}
 
-        {!loading && !error && step !== 1 && (
-          <div style={{
-            background: '#1a1f3a',
-            border: '1px solid #3a4458',
-            borderRadius: '8px',
-            padding: '40px',
-            textAlign: 'center',
-            margin: '24px'
-          }}>
-            <h2 style={{ color: '#00d4aa', marginBottom: '16px' }}>Step {step}</h2>
-            <p style={{ color: '#a8b2c7' }}>Component for step {step} coming soon...</p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px' }}>
-              {[1, 2, 3].map(s => (
-                <button
-                  key={s}
-                  onClick={() => setStep(s)}
-                  style={{
-                    background: step === s ? '#00d4aa' : '#242d4a',
-                    color: step === s ? '#0a0e27' : '#f5f7fa',
-                    padding: '10px 20px',
-                    border: '1px solid #3a4458',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Step {s}
-                </button>
-              ))}
-            </div>
+        {!loading && !error && step === 2 && (
+          <div style={{ padding: '0 24px' }}>
+            <StepAnalysis
+              etfData={etfData}
+              onNext={() => setStep(3)}
+              onPrevious={() => setStep(1)}
+            />
+          </div>
+        )}
+
+        {!loading && !error && step === 3 && (
+          <div style={{ padding: '0 24px' }}>
+            <StepDecision
+              etfData={etfData}
+              selectedETF={selectedETF}
+              setSelectedETF={setSelectedETF}
+              dcaAmount={dcaAmount}
+              setDcaAmount={setDcaAmount}
+              dcaStart={dcaStart}
+              setDcaStart={setDcaStart}
+              dcaEnd={dcaEnd}
+              setDcaEnd={setDcaEnd}
+              dca={dca}
+              onExportPDF={exportPDF}
+              onNext={() => setStep(1)}
+              onPrevious={() => setStep(2)}
+            />
           </div>
         )}
       </main>
